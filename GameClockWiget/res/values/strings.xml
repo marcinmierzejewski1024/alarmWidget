@@ -4,5 +4,8 @@
     <string name="app_name">Game clock wiget</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
-
+	
+    
+    <string name="notification_title">Wake up!</string>
+    <string name="notification_text">Time to get up</string>
 </resources>

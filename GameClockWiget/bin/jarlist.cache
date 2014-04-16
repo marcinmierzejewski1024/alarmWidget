@@ -1,5 +1,5 @@
 # cache for current jar dependency. DO NOT EDIT.
 # format is <lastModified> <length> <SHA-1> <path>
 # Encoding is UTF-8
-1397574386000 648327 ded9acc6a9792b8f1afc470f0c9cd36d178914cd /home/marcin/git/gameclockwidget/GameClockWiget/libs/android-support-v4.jar
 1396634926000 648327 ded9acc6a9792b8f1afc470f0c9cd36d178914cd /home/marcin/workspace/appcompat_v7/libs/android-support-v4.jar
+1397593206000 621451 5896b0a4e377ac4242eb2bc785220c1c4fc052f4 /home/marcin/git/alarmWidget/GameClockWiget/libs/android-support-v4.jar

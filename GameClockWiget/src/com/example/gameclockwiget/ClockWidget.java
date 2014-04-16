@@ -1,6 +1,7 @@
 package com.example.gameclockwiget;
 
 import java.util.Calendar;
+import java.util.Timer;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -10,36 +11,62 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
-//TODO: each minute refresh widget if no alarm set
-//TODO: delete alarm
+//TODO: check if all fields must be static
 
 public class ClockWidget extends AppWidgetProvider {
+	public static String TAG = "CLOCK WIDGET";
 
-	public static String MINUTE_ADD_ACTION = "addHour";
-	public static String MINUTE_SUB_ACTION = "subHour";
-	public static String MINUTE_RES_ACTION = "resHour";
+	public static String MINUTE_ADD_ACTION = "addMinute";
+	public static String MINUTE_SUB_ACTION = "subMinute";
+	public static String MINUTE_RES_ACTION = "resMinute";
 
-	private static boolean alarmSet = false;
+	public static boolean alarmSet = false;
 	private static Time time = new Time();
 	private static Integer minuteOffset = 0;
+	private static Timer timer = null;
+
+	public static int delay = 3;
+	public static int timeToStart = delay;
+	public static boolean startCounting = false;
+
+	private static AppWidgetManager aWM;
+	private int[] ids;
 
 	@Override
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager,
 			int[] appWidgetIds) {
 
-		ComponentName thisWidget = new ComponentName(context, ClockWidget.class);
-		int[] allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
+		aWM = appWidgetManager;
 
-		for (int widgetId : allWidgetIds) {
+		ids = new int[appWidgetIds.length];
+		for (int i = 0; i < appWidgetIds.length; i++)
+			ids[i] = appWidgetIds[i];
+
+		// propably 2 lines below are not needed, can use ids
+		//ComponentName thisWidget = new ComponentName(context, ClockWidget.class);
+		//int[] allWidgetIds = aWM.getAppWidgetIds(thisWidget);
+
+		for (int widgetId : /*allWidgetI*/ids) {
 
 			RemoteViews remoteViews = new RemoteViews(context.getPackageName(),
 					R.layout.widget);
 
 			updateUI(remoteViews);
+
+			if (timer == null) {
+
+				timer = new Timer();
+				Calendar cal = Calendar.getInstance();
+				cal.add(Calendar.SECOND, 1);
+				cal.set(Calendar.MILLISECOND, 0);
+
+				timer.scheduleAtFixedRate(new Refresher(context, this),
+						cal.getTime(), 100);
+			}
 
 			Intent hourAddIntent = new Intent(context, ClockWidget.class);
 			hourAddIntent.setAction(MINUTE_ADD_ACTION);
@@ -59,7 +86,7 @@ public class ClockWidget extends AppWidgetProvider {
 					hourResIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 			remoteViews.setOnClickPendingIntent(R.id.timeRestore, pi3);
 
-			appWidgetManager.updateAppWidget(widgetId, remoteViews);
+			aWM.updateAppWidget(widgetId, remoteViews);
 		}
 	}
 
@@ -69,18 +96,21 @@ public class ClockWidget extends AppWidgetProvider {
 
 		if (intent.getAction().equals(MINUTE_SUB_ACTION)) {
 			minuteOffset--;
-			alarmSet = true;
-			setAlarm(context);
+			startCounting = true;
+			timeToStart = delay;
 
 		} else if (intent.getAction().equals(MINUTE_ADD_ACTION)) {
 			minuteOffset++;
-			alarmSet = true;
-			setAlarm(context);
+			startCounting = true;
+			timeToStart = delay;
 
 		} else if (intent.getAction().equals(MINUTE_RES_ACTION)) {
 
 			alarmSet = false;
+			startCounting = false;
 			minuteOffset = 0;
+			timeToStart = delay;
+
 			deleteAlarm(context);
 		}
 
@@ -93,7 +123,7 @@ public class ClockWidget extends AppWidgetProvider {
 				remoteViews);
 	}
 
-	private void updateUI(RemoteViews remoteViews) {
+	public void updateUI(RemoteViews remoteViews) {
 
 		time.setToNow();
 		time.set((long) (1000 * 60 * minuteOffset) + time.toMillis(false));
@@ -105,12 +135,22 @@ public class ClockWidget extends AppWidgetProvider {
 			remoteViews.setTextViewText(R.id.clock, time.format("%k:%M"));
 		} else
 			remoteViews.setViewVisibility(R.id.alarm, View.INVISIBLE);
+
+		if (null != aWM)
+			aWM.updateAppWidget(ids, remoteViews);
 	}
 
-	private void setAlarm(Context context) {
+	public void updateUIWithContext(Context context) {
+
+		RemoteViews remoteViews = new RemoteViews(context.getPackageName(),
+				R.layout.widget);
+		updateUI(remoteViews);
+
+	}
+
+	public void setAlarm(Context context) {
 
 		try {
-			Toast.makeText(context, "kontekst", Toast.LENGTH_LONG).show();
 
 			Calendar cal = Calendar.getInstance();
 
@@ -133,15 +173,23 @@ public class ClockWidget extends AppWidgetProvider {
 					pendingIntent);
 
 		} catch (Exception e) {
-			Toast.makeText(context, "???" + e, Toast.LENGTH_LONG).show();
+			Log.d(TAG, "setAlarm" + e);
 
 		}
 
 	}
 
 	private void deleteAlarm(Context context) {
-		// TODO Auto-generated method stub
+		
+		AlarmManager alarmMgr = (AlarmManager) context
+				.getSystemService(Context.ALARM_SERVICE);
+		Intent intent = new Intent(context, AlarmBR.class);
 
+		PendingIntent pendingIntent = PendingIntent.getBroadcast(
+				context.getApplicationContext(), 0, intent,
+				PendingIntent.FLAG_UPDATE_CURRENT);
+
+		alarmMgr.cancel(pendingIntent);
 	}
 
 }
