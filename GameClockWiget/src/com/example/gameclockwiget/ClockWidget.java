@@ -133,7 +133,7 @@ public class ClockWidget extends AppWidgetProvider {
 		if (alarmSet && timeToStart == 0) {
 			remoteViews.setTextViewText(R.id.clock, alarmTime);
 			remoteViews.setViewVisibility(R.id.alarm, View.VISIBLE);
-			Log.d(TAG, "time to start:" + timeToStart);
+			//Log.d(TAG, "time to start:" + timeToStart);
 		}
 
 		if (null != aWM)

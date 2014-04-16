@@ -9,9 +9,8 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-
-//TODO:VIBRATE,sound and notification!
 
 public class AlarmBR extends BroadcastReceiver {
 	public final static String TAG = "ALARM BR";
@@ -33,11 +32,13 @@ public class AlarmBR extends BroadcastReceiver {
 			Log.d(TAG, "ringtone except: " + e);
 		}
 
-		Notification nof = new Notification.Builder(context)
-				.setContentTitle(context.getString(R.string.notification_title))
-				.setContentText(context.getString(R.string.notification_text))
-				.setSmallIcon(R.drawable.ic_launcher).build();
-
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context);
+		
+		builder.setContentTitle(context.getString(R.string.notification_title));
+		builder.setContentText(context.getString(R.string.notification_text));
+		builder.setSmallIcon(R.drawable.ic_launcher).build();
+		
+		Notification nof = builder.getNotification();
 		NotificationManager notificationManager = (NotificationManager) context
 				.getSystemService(Context.NOTIFICATION_SERVICE);
 
