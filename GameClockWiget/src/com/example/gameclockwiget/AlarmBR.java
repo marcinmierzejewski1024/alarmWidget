@@ -10,7 +10,6 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Vibrator;
 import android.util.Log;
-import android.widget.Toast;
 
 //TODO:VIBRATE,sound and notification!
 
