@@ -15,7 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
-//TODO: check if all fields must be static
+//TODO: Only one instance becouse of static fields
 
 public class ClockWidget extends AppWidgetProvider {
 	public static String TAG = "CLOCK WIDGET";
@@ -28,12 +28,13 @@ public class ClockWidget extends AppWidgetProvider {
 	private static Time time = new Time();
 	private static Integer minuteOffset = 0;
 	private static Timer timer = null;
+	public static boolean startCounting = false;
+	public static String alarmTime = "test";
 
 	public static int delay = 3;
 	public static int timeToStart = delay;
-	public static boolean startCounting = false;
 
-	private static AppWidgetManager aWM;
+	private AppWidgetManager aWM;
 	private int[] ids;
 
 	@Override
@@ -46,11 +47,7 @@ public class ClockWidget extends AppWidgetProvider {
 		for (int i = 0; i < appWidgetIds.length; i++)
 			ids[i] = appWidgetIds[i];
 
-		// propably 2 lines below are not needed, can use ids
-		//ComponentName thisWidget = new ComponentName(context, ClockWidget.class);
-		//int[] allWidgetIds = aWM.getAppWidgetIds(thisWidget);
-
-		for (int widgetId : /*allWidgetI*/ids) {
+		for (int widgetId : ids) {
 
 			RemoteViews remoteViews = new RemoteViews(context.getPackageName(),
 					R.layout.widget);
@@ -114,27 +111,30 @@ public class ClockWidget extends AppWidgetProvider {
 			deleteAlarm(context);
 		}
 
-		// refresh widget
 		RemoteViews remoteViews = new RemoteViews(context.getPackageName(),
 				R.layout.widget);
-		ComponentName thisWidget = new ComponentName(context, ClockWidget.class);
 		updateUI(remoteViews);
-		AppWidgetManager.getInstance(context).updateAppWidget(thisWidget,
-				remoteViews);
 	}
 
 	public void updateUI(RemoteViews remoteViews) {
 
 		time.setToNow();
+
 		time.set((long) (1000 * 60 * minuteOffset) + time.toMillis(false));
 
-		remoteViews.setTextViewText(R.id.clock, time.format("%k:%M"));
+		if (timeToStart == 0 || timeToStart == delay)
+			remoteViews.setTextViewText(R.id.clock, time.format("%k:%M"));
 
 		if (alarmSet) {
 			remoteViews.setViewVisibility(R.id.alarm, View.VISIBLE);
-			remoteViews.setTextViewText(R.id.clock, time.format("%k:%M"));
 		} else
 			remoteViews.setViewVisibility(R.id.alarm, View.INVISIBLE);
+
+		if (alarmSet && timeToStart == 0) {
+			remoteViews.setTextViewText(R.id.clock, alarmTime);
+			remoteViews.setViewVisibility(R.id.alarm, View.VISIBLE);
+			Log.d(TAG, "time to start:" + timeToStart);
+		}
 
 		if (null != aWM)
 			aWM.updateAppWidget(ids, remoteViews);
@@ -171,6 +171,8 @@ public class ClockWidget extends AppWidgetProvider {
 			alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP,
 					cal.getTimeInMillis(), AlarmManager.INTERVAL_DAY,
 					pendingIntent);
+			alarmTime = time.hour + ":"
+					+ ((time.minute > 9) ? time.minute : "0" + time.minute);
 
 		} catch (Exception e) {
 			Log.d(TAG, "setAlarm" + e);
@@ -180,7 +182,7 @@ public class ClockWidget extends AppWidgetProvider {
 	}
 
 	private void deleteAlarm(Context context) {
-		
+
 		AlarmManager alarmMgr = (AlarmManager) context
 				.getSystemService(Context.ALARM_SERVICE);
 		Intent intent = new Intent(context, AlarmBR.class);
